@@ -137,6 +137,20 @@ uv run python clip_manager.py --action wizard --path "/mnt/ssd-storage/..."
 
 Priority: `--device` flag > `CORRIDORKEY_DEVICE` env var > auto-detect.
 
+## VRAM Optimization
+
+If your GPU is running out of memory, lower the inference resolution and keep mixed precision enabled:
+
+```bash
+uv run python clip_manager.py --action run_inference --img-size 1536 --precision auto
+```
+
+Tips:
+- `--img-size 2048` = highest quality, highest VRAM use (default)
+- `--img-size 1536` = significantly lower VRAM, strong quality
+- `--img-size 1024` = lowest VRAM, lower edge fidelity
+- `--precision auto` uses fp16 on CUDA (saves VRAM) and fp32 elsewhere
+
 **Mac users (Apple Silicon):** MPS support is experimental in PyTorch. If you encounter operator errors, set `PYTORCH_ENABLE_MPS_FALLBACK=1` to fall back to CPU for unsupported ops:
 ```bash
 export PYTORCH_ENABLE_MPS_FALLBACK=1

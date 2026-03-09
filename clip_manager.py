@@ -494,7 +494,8 @@ def run_videomama(clips: list[ClipEntry], chunk_size: int = 50, device: str | No
             traceback.print_exc()
 
 
-def run_inference(clips, device=None, backend=None, max_frames=None):
+def run_inference(clips, device=None, backend=None, max_frames=None, img_size=2048, precision="auto"):
+
     ready_clips = [c for c in clips if c.input_asset and c.alpha_asset]
 
     if not ready_clips:
@@ -565,7 +566,7 @@ def run_inference(clips, device=None, backend=None, max_frames=None):
         device = resolve_device()
     from CorridorKeyModule.backend import create_engine
 
-    engine = create_engine(backend=backend, device=device)
+    engine = create_engine(backend=backend, device=device, img_size=img_size, precision=precision)
 
     for clip in ready_clips:
         logger.info(f"Running Inference on: {clip.name}")
@@ -914,6 +915,18 @@ if __name__ == "__main__":
         default=None,
         help="Limit number of frames to process per clip (e.g. 1 for first frame only)",
     )
+    parser.add_argument(
+        "--img-size",
+        type=int,
+        default=2048,
+        help="Model inference resolution. Lower values reduce VRAM usage (default: 2048).",
+    )
+    parser.add_argument(
+        "--precision",
+        choices=["auto", "fp16", "fp32"],
+        default="auto",
+        help="Torch precision mode. auto uses fp16 on CUDA and fp32 elsewhere.",
+    )
 
     args = parser.parse_args()
     source_path = args.path or args.win_path
@@ -928,7 +941,14 @@ if __name__ == "__main__":
         generate_alphas(clips, device=device)
     elif args.action == "run_inference":
         clips = scan_clips()
-        run_inference(clips, device=device, backend=args.backend, max_frames=args.max_frames)
+        run_inference(
+            clips,
+            device=device,
+            backend=args.backend,
+            max_frames=args.max_frames,
+            img_size=args.img_size,
+            precision=args.precision,
+        )
     elif args.action == "wizard":
         if not source_path:
             print("Error: --path (or deprecated --win_path) required for wizard.")
